@@ -1,19 +1,24 @@
+
+#include <SD.h>
 #include <Arduino.h>
 #include <DS3231.h>
+
 #define voltageInputBattery A0 //Sensor A0
 #define voltageInput A1 //Sensor A1
 #define voltageInputAUX A2 //Sensor A2
-#define currentInput A14 //Amperimetro
-#define rele1 52 //Porta rele
-#define rele2 50 //Porta rele 2
-#define rele3 51 //Porta rele 3
+#define currentInput A4 //Amperimetro
+#define rele1 22 //Porta rele
+#define rele2 23 //Porta rele 2
+#define rele3 24 //Porta rele 3
 #define sTime 7.55 //Hora inicial
 #define fTime 18.00 //Hora final
 #define vMin 11 //Voltagem minima
 #define cMin 5 //Corrente minima
 #define medidas 10 //Numero de leituras
-#define minutos 5 //Tempo ligado
+#define minutos 300000 //Tempo ligado
+#define sdport 53
 
+File myFile;
 
 DS3231  rtc(SDA, SCL);
 
@@ -27,15 +32,15 @@ int valueCurrent = 0.0;
 int valueA0 = 0.0;
 int valueA1 = 0.0;
 int valueA2 = 0.0;
-float R1 = 30000.0; //Resistor 1
-float R2 = 7500.0; //Resistor 2
+float R1 = 1000000.0; //Resistor 1
+float R2 = 100000.0; //Resistor 2
 float relac = (R2 / (R1 + R2));   //relaçao divisor de tensao
 int mVperAmp = 66;// sensibilidade do sensor de corrente
 int RawValue = 0;
 int ACSoffset = 2500;
 double Voltage = 0;
 double Amps = 0;
-int tempo = minutos * 60 * 1000;
+
 
 void setup() {
   pinMode(voltageInputBattery, INPUT);
@@ -51,11 +56,16 @@ void setup() {
   analogReference(DEFAULT);
   Serial.begin(9600);
   rtc.begin();
-
+  Serial.println("Iniciando sd");
+  pinMode(sdport, OUTPUT);
+  
+  if(SD.begin (sdport))
+    Serial.println("SD iniciado \n");
+       
   //SETAR A  DATA AQUI
-  //rtc.setDOW(WEDNESDAY);   //DIA
-  //rtc.setTime(8, 40, 10);   //Hora (24hr)
-  //rtc.setDate(8, 10, 2016); //Data MM/DD/AA
+  //rtc.setDOW(MONDAY);   //DIA
+  //rtc.setTime(9, 26, 10);   //Hora (24hr)
+  //rtc.setDate(9, 5, 2016); //Data MM/DD/AA
 }
 
 float lePorta(uint8_t analogInput) {    //Le a porta analogica e retorna a media das medidas
@@ -80,21 +90,26 @@ float calcCorrente (float value) {
 
 void mostraData() {
   t = rtc.getTime();
-  Serial.print("Dia da semana ");
-  Serial.print(t.dow, DEC);
-  Serial.print(". \n");
-  Serial.print(t.date, DEC);
-  Serial.print("/");
-  Serial.print(rtc.getMonthStr());
-  Serial.print("/");
-  Serial.print(t.year, DEC);
-  Serial.println(".");
-  Serial.print(t.hour, DEC);
-  Serial.print(":");
-  Serial.print(t.min, DEC);
-  Serial.print(":");
-  Serial.print(t.sec, DEC);
-  Serial.println(".");
+  myFile = SD.open("log.txt", FILE_WRITE); 
+  if(myFile) {
+      myFile.print("Dia da semana ");
+      myFile.print(t.dow, DEC);
+      myFile.print(". \n");
+      myFile.print(t.date, DEC);
+      myFile.print("/");
+      myFile.print(rtc.getMonthStr());
+      myFile.print("/");
+      myFile.print(t.year, DEC);
+      myFile.println(".");
+      myFile.print(t.hour, DEC);
+      myFile.print(":");
+      myFile.print(t.min, DEC);
+      myFile.print(":");
+      myFile.print(t.sec, DEC);
+      myFile.println(".");
+      myFile.close();
+  }
+  else Serial.println ("Sem sd, os dados nao serao salvos no log");
 }
 
 void loop() {
@@ -120,12 +135,28 @@ void loop() {
   Serial.println(Amps, 2);
   Serial.println("  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -");
 
+//GRAVANDO NO SD
+   myFile = SD.open("log.txt", FILE_WRITE);    
+  if (myFile) {
+        myFile.print("Tensao em A0 (BATERIA) = ");
+        myFile.println(vinA0, 2);
+        myFile.print("Tensao em A1 = ");
+        myFile.println(vinA1, 2);
+        myFile.print("Tensao em A2 = ");
+        myFile.println (vinA2, 2);
+        myFile.print("Corrente = ");
+        myFile.println(Amps, 2);
+        myFile.println("  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -");
+        myFile.close();
+      }
+      
   if (t.hour > sTime and t.hour < fTime and vinA0 < vMin) {
     digitalWrite(rele1, LOW);    //Liga rele 1
     digitalWrite(rele2, LOW);
     digitalWrite(rele3, LOW);
-    
+
     Serial.print("Carregando...");
+    myFile.print("Foi iniciado um carregamento");
 
     //while ( Amps < 3) {
     /* if (t.hour > sTime and t.hour < fTime) {
@@ -135,7 +166,7 @@ void loop() {
        Serial.print("Corrente = ");
        Serial.println(Amps, 2);
        delay(5000);**/
-    delay(300000);
+    delay(minutos);
     /*}
       else {
       break;
@@ -145,6 +176,7 @@ void loop() {
     digitalWrite(rele2, HIGH);
     digitalWrite(rele3, HIGH);
     Serial.print("Carregamento finalizado");
+    myFile.println("Finalizado carregamento");
   }
   delay (3000);
 }
