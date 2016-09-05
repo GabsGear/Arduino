@@ -92,21 +92,19 @@ void mostraData() {
   t = rtc.getTime();
   myFile = SD.open("log.txt", FILE_WRITE); 
   if(myFile) {
-      myFile.print("Dia da semana ");
       myFile.print(t.dow, DEC);
-      myFile.print(". \n");
+      myFile.print(" ");
       myFile.print(t.date, DEC);
-      myFile.print("/");
+      myFile.print(" ");
       myFile.print(rtc.getMonthStr());
-      myFile.print("/");
+      myFile.print(" ");
       myFile.print(t.year, DEC);
-      myFile.println(".");
+      myFile.print(" ");
       myFile.print(t.hour, DEC);
-      myFile.print(":");
+      myFile.print(" ");
       myFile.print(t.min, DEC);
-      myFile.print(":");
+      myFile.print(" ");
       myFile.print(t.sec, DEC);
-      myFile.println(".");
       myFile.close();
   }
   else Serial.println ("Sem sd, os dados nao serao salvos no log");
@@ -138,15 +136,15 @@ void loop() {
 //GRAVANDO NO SD
    myFile = SD.open("log.txt", FILE_WRITE);    
   if (myFile) {
-        myFile.print("Tensao em A0 (BATERIA) = ");
-        myFile.println(vinA0, 2);
-        myFile.print("Tensao em A1 = ");
-        myFile.println(vinA1, 2);
-        myFile.print("Tensao em A2 = ");
-        myFile.println (vinA2, 2);
-        myFile.print("Corrente = ");
-        myFile.println(Amps, 2);
-        myFile.println("  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -");
+        myFile.print(" ");
+        myFile.print(vinA0, 2);
+        myFile.print(" ");
+        myFile.print(vinA1, 2);
+        myFile.print(" ");
+        myFile.print(vinA2, 2);
+        myFile.print(" ");
+        myFile.print(Amps, 2);
+        myFile.println(" ");
         myFile.close();
       }
       
@@ -156,8 +154,6 @@ void loop() {
     digitalWrite(rele3, LOW);
 
     Serial.print("Carregando...");
-    myFile.print("Foi iniciado um carregamento");
-
     //while ( Amps < 3) {
     /* if (t.hour > sTime and t.hour < fTime) {
        RawValue = lePorta(currentInput);
@@ -176,7 +172,6 @@ void loop() {
     digitalWrite(rele2, HIGH);
     digitalWrite(rele3, HIGH);
     Serial.print("Carregamento finalizado");
-    myFile.println("Finalizado carregamento");
   }
   delay (3000);
 }
