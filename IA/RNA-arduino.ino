@@ -6,41 +6,40 @@
 #define NR_NEURON_O 6
 #define CAMADAS_O 2
 
-const int motor_1_a = 3;
-const int motor_1_b = 5;
-const int motor_2_a = 6;
-const int motor_2_b = 9;
+const int motor_1_a = 3; //input 1
+const int motor_1_b = 5; //input 2
+const int motor_2_a = 6; //input 3
+const int motor_2_b = 9; //input 4
 const int s1 = 11;
 const int s2 = 12;
 
-float w_e_o[ENTRADAS + 1][NR_NEURON_O] = {{1.12031, -0.291046, -1.66446, 0.844718, 1.06282, 1.30628},
-										   {1.4758, 0.556192, -1.31411, 0.903254, -1.33468, 2.13375},
-										   {3.78627, -4.47363, -0.495717, 0.46272, 1.66663, 1.27894}};
+double w_e_o[ENTRADAS + 1][NR_NEURON_O] = {{-0.713013, 4.16431, -5.48521, -2.29616, -11.6229, 10.1455},
+										   {-13.8452, 2.47936, 1.74057, -0.42644, 4.7151, -4.48398},
+										   {5.09045, -16.2471, -0.0663805, -1.5426, 6.71265, 1.01201}};
 
-float w_o_o[NR_NEURON_O + 1][NR_NEURON_O] = {{-8.14493, 0.193826, 7.77479, -4.80743, -9.46272, -16.1411},
-											  {57.4796, 14.3955, -10.9684, 5.33009, 4.87243, -56.2334},
-											  {14.3955, 6.2596, -4.27177, 0.904142, 2.03766, -14.3774},
-											  {-10.9684, -2.27177, 37.0396, -7.88513, -12.943, 15.9866},
-											  {5.33009, -1.09586, -7.88513, 6.31403, 1.20342, -7.27762},
-											  {2.87243, 2.03766, -14.943, 3.20342, 10.5122, -8.01566},
-											  {-58.2334, -16.3774, 15.9866, -5.27762, -6.01566, 84.0493}};
+double w_o_o[NR_NEURON_O + 1][NR_NEURON_O] = {{-0.955732, -7.00449, -5.51682, -19.1118, -31.7169, -20.7859},
+											  {1599.18, -2.82879, 12.1979, -4.5816, 18.6024, 7.33838},
+											  {-2.82879, 111.032, -1.01418, 2.04162, 20.9231, 7.60537},
+											  {10.1979, -3.01418, 43.7009, -7.19078, 1.94591, -1.33867},
+											  {-4.5816, 2.04162, -7.19078, 14.6589, 2.30546, 3.28592},
+											  {20.6024, 22.9231, 3.94591, 2.30546, 181.974, -4.51999},
+											  {7.33838, 7.60537, -1.33867, 3.28592, -6.51999, 53.4189}};
 
-float w_o_s[NR_NEURON_O + 1][SAIDAS] = {{-16.1816, 1.59551},
-										 {-3.99657, -3.77226},
-										 {9.95658, -1.61525},
-										 {-12.3724, 8.53777},
-										 {14.0221, 0.658199},
-										 {3.42714, -5.20899},
-										 {11.722, 14.3048}};
+double w_o_s[NR_NEURON_O + 1][SAIDAS] = {{-34.9476, -18.0204},
+										 {73.9261, 39.1748},
+										 {-15.3795, 15.8028},
+										 {-0.760588, 0.0840644},
+										 {-23.6017, 1.96744},
+										 {4.00761, 1.09898},
+										 {-25.3971, -35.8595}};
 
-float saida_o[NR_NEURON_O][CAMADAS_O];
-float saida_s[SAIDAS];
-float sensor[ENTRADAS];
-float speed[ENTRADAS];
+double saida_o[NR_NEURON_O][CAMADAS_O];
+double saida_s[SAIDAS];
+double sensor[ENTRADAS];
 
-float ler_sensor(int sensor);
-float f_sigm1oid(float net);
-void calcular_saidas(float entradas[ENTRADAS]);
+double ler_sensor(int sensor);
+double f_sigm1oid(double net);
+void calcular_saidas(double entradas[ENTRADAS]);
 
 void setup()
 {
@@ -51,51 +50,55 @@ void setup()
 	pinMode(motor_2_b, OUTPUT);
 }
 
+double vel_m1 = 0;
+double vel_m2 = 0;
+
 void loop()
 {
-	for(int i = 0; i < ENTRADAS; i++){
-		sensor[i] = ler_sensor(i + 1);
-		Serial.println("");
-		Serial.print("s1: ");
-		Serial.print(sensor[0]);
-		Serial.print(" cm | s2: ");
-		Serial.print(sensor[1]);
-		Serial.print(" cm ");
-		sensor[i] = mapSensor(i);
-	}
+	sensor[0] = ler_sensor(s1);
+	sensor[1] = ler_sensor(s2);
 
-	for(int i = 0; i < ENTRADAS; i++){
-		speed[i] = mapSpeed(saida_s[i]*10); 
-	}
+	Serial.println("");
+	Serial.print("s1: ");
+	Serial.print(sensor[0]);
+	Serial.print(" cm | s2: ");
+	Serial.print(sensor[1]);
+	Serial.println(" cm ");
+
+	sensor[0] = mapSensor(0);
+	sensor[1] = mapSensor(1);
 
 	calcular_saidas(sensor);
-	acelerar(speed[0], speed[1]);
+
+	vel_m1 = mapSpeed(saida_s[0]);
+	vel_m2 = mapSpeed(saida_s[1]);
+
+  	Serial.print("m1: ");
+	Serial.print(vel_m1);
+  	Serial.print("    | m2: ");
+	Serial.println(vel_m2);
+
+	acelerar(vel_m1, vel_m2);
+	delay(600);
 	parar();
-	delay(500);
-	
 }
 
 void parar()
 {
-  	digitalWrite(motor_1_a, LOW);
-  	digitalWrite(motor_1_b, LOW); 
+	digitalWrite(motor_1_a, LOW);
+	digitalWrite(motor_1_b, LOW);
 	digitalWrite(motor_2_a, LOW);
-  	digitalWrite(motor_2_b, LOW); 
+	digitalWrite(motor_2_b, LOW);
 }
 
-float acelerar(float vel_m1, float vel_m2)
+double acelerar(double vel_m1, double vel_m2)
 {
 	analogWrite(motor_1_a, vel_m1);
 	analogWrite(motor_2_a, vel_m2);
 }
 
-float ler_sensor(int sensor)
+double ler_sensor(int sensor)
 {
-	if(sensor == 1)
-		sensor = s1;
-	else
-		sensor = s2;
-		
 	// Emite sinal
 	pinMode(sensor, OUTPUT);
 	digitalWrite(sensor, HIGH);
@@ -104,30 +107,30 @@ float ler_sensor(int sensor)
 	// Configura sensor para receber sinal
 	pinMode(sensor, INPUT);
 	int tempo = pulseIn(sensor, HIGH);
-	return tempo / 2 / 29.4;
+	return (double)tempo / 2 / 29.4;
 }
 
-float f_sigmoid(float net)
+double f_sigmoid(double net)
 {
 	return 1 / (1 + exp(-net));
 }
 
-float mapSensor(int pos)
+double mapSensor(int pos)
 {
-	sensor[pos] = float(mapfloat(sensor[pos], 3, 310, 0, 1));
+	sensor[pos] = mapfloat(sensor[pos], 2, 333, 0, 1);
 }
 
-float mapSpeed(float saida)
+double mapSpeed(double saida)
 {
-	return mapfloat(saida, 0, 10, MIN_VEL, MAX_VEL);
+	return mapfloat(saida, 0, 1, MIN_VEL, MAX_VEL);
 }
 
-float mapfloat(long x, long in_min, long in_max, long out_min, long out_max)
+double mapfloat(double x, double in_min, double in_max, double out_min, double out_max)
 {
- return (float)(x - in_min) * (out_max - out_min) / (float)(in_max - in_min) + out_min;
+	return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
-void calcular_saidas(float entradas[ENTRADAS])
+void calcular_saidas(double entradas[ENTRADAS])
 {
 	int i, j;
 
